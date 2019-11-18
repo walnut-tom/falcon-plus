@@ -1,0 +1,1 @@
+CREATE USER falcon_plus WITH LOGIN PASSWORD 'password';
