@@ -17,6 +17,7 @@ package graph
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +31,6 @@ import (
 	grh "github.com/open-falcon/falcon-plus/modules/api/graph"
 	log "github.com/sirupsen/logrus"
 	tcache "github.com/toolkits/cache/localcache/timedcache"
-	"net/http"
 )
 
 var (
@@ -130,7 +130,7 @@ func EndpointRegexpQuery(c *gin.Context) {
 		}
 
 		for _, trem := range qs {
-			dt = dt.Where(" endpoint regexp ? ", strings.TrimSpace(trem))
+			dt = dt.Where(" endpoint ~* ? ", strings.TrimSpace(trem))
 		}
 		dt.Limit(inputs.Limit).Offset(offset).Scan(&endpoint)
 	} else if len(endpoint_id) != 0 {
@@ -192,9 +192,9 @@ func EndpointCounterRegexpQuery(c *gin.Context) {
 					t := strings.TrimSpace(term)
 					if t != "" {
 						if strings.HasPrefix(term, "!") {
-							dt = dt.Where("NOT counter regexp ?", term[1:])
+							dt = dt.Where("NOT counter ~* ?", term[1:])
 						} else {
-							dt = dt.Where("counter regexp ?", term)
+							dt = dt.Where("counter ~* ?", term)
 						}
 					}
 				}

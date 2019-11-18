@@ -30,11 +30,6 @@
         "plus_api":"http://127.0.0.1:8080",
         "plus_api_token": "default-token-used-in-server-side"
     },
-    "falcon_portal": {
-        "addr": "root:@tcp(127.0.0.1:3306)/alarms?charset=utf8&loc=Local",
-        "idle": 10,
-        "max": 100
-    },
     "worker": {
         "im": 10,
         "sms": 10,

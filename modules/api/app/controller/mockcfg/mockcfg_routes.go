@@ -36,4 +36,10 @@ func Routes(r *gin.Engine) {
 	mogr.POST("/", CreateNoData)
 	mogr.PUT("/", UpdateNoData)
 	mogr.DELETE("/:nid", DeleteNoData)
+
+	hostr := r.Group("/api/v2/nodata")
+	hostr.Use(utils.AuthSessionMidd)
+	hostr.GET("/hosts/:group_name", queryHostsFromGroup)
+	hostr.GET("/mockcfgs", queryMockConfigs)
+
 }

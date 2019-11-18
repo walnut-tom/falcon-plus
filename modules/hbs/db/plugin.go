@@ -15,38 +15,31 @@
 package db
 
 import (
-	"log"
+	"fmt"
+	"net/http"
+
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
+
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/go-resty/resty/v2"
 )
 
-func QueryPlugins() (map[int][]string, error) {
-	m := make(map[int][]string)
-
-	sql := "select grp_id, dir from plugin_dir"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return m, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			id  int
-			dir string
-		)
-
-		err = rows.Scan(&id, &dir)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
-		}
-
-		if _, exists := m[id]; exists {
-			m[id] = append(m[id], dir)
-		} else {
-			m[id] = []string{dir}
+func QueryPlugins() (m map[int][]string, err error) {
+	defer utils.DebugPrintError(err)
+	m = make(map[int][]string)
+	url := fmt.Sprintf("%s/api/v1/plugin", g.Config().Api.PlusApi)
+	plugins := make([]*models.PluginDir, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&plugins).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, plugin := range plugins {
+			if _, exists := m[int(plugin.GrpId)]; exists {
+				m[int(plugin.GrpId)] = append(m[int(plugin.GrpId)], plugin.Dir)
+			} else {
+				m[int(plugin.GrpId)] = []string{plugin.Dir}
+			}
 		}
 	}
-
-	return m, nil
+	return m, err
 }

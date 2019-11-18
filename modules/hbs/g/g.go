@@ -15,7 +15,6 @@
 package g
 
 import (
-	"log"
 	"runtime"
 )
 
@@ -37,5 +36,4 @@ func VersionMsg() string {
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }

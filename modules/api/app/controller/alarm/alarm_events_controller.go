@@ -16,11 +16,13 @@ package alarm
 
 import (
 	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	alm "github.com/open-falcon/falcon-plus/modules/api/app/model/alarm"
-	"strings"
 )
 
 type APIGetAlarmListsInputs struct {
@@ -75,7 +77,9 @@ func (s APIGetAlarmListsInputs) collectDBFilters(database *gorm.DB, tableName st
 		filterDB = filterDB.Where("process_status in (?)", pstatusTmp)
 	}
 	if s.Metrics != "" {
-		filterDB = filterDB.Where("metric regexp ?", s.Metrics)
+		//FIXME:
+		tmp := make([]string, 0)
+		tmp = append(tmp, fmt.Sprintf("metrics ~* '%s'", s.Metrics))
 	}
 	if s.EventId != "" {
 		filterDB = filterDB.Where("id = ?", s.EventId)

@@ -17,7 +17,7 @@ package g
 import (
 	"errors"
 	"github.com/toolkits/net"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"math"
 	"net/rpc"
 	"sync"

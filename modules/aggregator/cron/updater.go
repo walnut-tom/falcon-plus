@@ -15,15 +15,16 @@
 package cron
 
 import (
+	"time"
+
 	"github.com/open-falcon/falcon-plus/modules/aggregator/db"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
-	"time"
 )
 
 func UpdateItems() {
 	for {
 		updateItems()
-		d := time.Duration(g.Config().Database.Interval) * time.Second
+		d := time.Duration(g.Config().Cluster.Interval) * time.Second
 		time.Sleep(d)
 	}
 }

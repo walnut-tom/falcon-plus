@@ -16,7 +16,7 @@ package api
 
 import (
 	"container/list"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"net/rpc"
 	"sync"

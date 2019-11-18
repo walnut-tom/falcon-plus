@@ -15,7 +15,7 @@
 package cache
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 

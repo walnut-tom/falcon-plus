@@ -15,26 +15,17 @@
 package db
 
 import (
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
+	"encoding/json"
+
+	"github.com/go-resty/resty/v2"
 	"github.com/open-falcon/falcon-plus/modules/hbs/g"
-	"log"
 )
 
-var DB *sql.DB
-
+//Init init resty
 func Init() {
-	var err error
-	DB, err = sql.Open("mysql", g.Config().Database)
-	if err != nil {
-		log.Fatalln("open db fail:", err)
-	}
-
-	DB.SetMaxOpenConns(g.Config().MaxConns)
-	DB.SetMaxIdleConns(g.Config().MaxIdle)
-
-	err = DB.Ping()
-	if err != nil {
-		log.Fatalln("ping db fail:", err)
-	}
+	token, _ := json.Marshal(map[string]string{
+		"name": "default",
+		"sig":  g.Config().Api.PlusApiToken,
+	})
+	resty.New().SetHeader("Apitoken", string(token))
 }

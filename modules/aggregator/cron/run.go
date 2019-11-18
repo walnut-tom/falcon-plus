@@ -15,7 +15,7 @@
 package cron
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
 	"strings"

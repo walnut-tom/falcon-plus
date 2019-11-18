@@ -19,14 +19,27 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/common/xorm/storage"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 	log "github.com/sirupsen/logrus"
 )
 
 type APICreatePluginInput struct {
 	GrpId   int64  `json:"hostgroup_id" binding:"required"`
 	DirPath string `json:"dir_path" binding:"required"`
+}
+
+func queryPlugins(c *gin.Context) {
+	var err error
+	var plugins []models.PluginDir
+	plugins, err = storage.GetPluginService().QueryPlugins(config.Engines().Portal())
+	if err == nil {
+		h.JSONR(c, plugins)
+		return
+	}
 }
 
 func CreatePlugin(c *gin.Context) {

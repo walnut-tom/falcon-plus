@@ -22,9 +22,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/common/xorm/storage"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 )
 
 func GetExpressionList(c *gin.Context) {
@@ -40,15 +42,10 @@ func GetExpressionList(c *gin.Context) {
 		h.JSONR(c, badstatus, err.Error())
 		return
 	}
-	var dt *gorm.DB
-	expressions := []f.Expression{}
-	if limit != -1 && page != -1 {
-		dt = db.Falcon.Raw("SELECT * from expression limit ?,?", page, limit).Scan(&expressions)
-	} else {
-		dt = db.Falcon.Find(&expressions)
-	}
-	if dt.Error != nil {
-		h.JSONR(c, badstatus, dt.Error)
+	expressions := []models.Expression{}
+	expressions, err = storage.GetExpressionService().QueryExpressions(config.Engines().Portal(), page, limit)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
 		return
 	}
 	h.JSONR(c, expressions)

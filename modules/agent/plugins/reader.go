@@ -17,7 +17,7 @@ package plugins
 import (
 	"github.com/open-falcon/falcon-plus/modules/agent/g"
 	"io/ioutil"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"path/filepath"
 	"strconv"
 	"strings"

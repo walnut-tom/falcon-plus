@@ -15,34 +15,32 @@
 package db
 
 import (
-	"log"
+	"fmt"
+	"net/http"
+
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
+
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/go-resty/resty/v2"
 )
 
-func QueryHostGroups() (map[int][]int, error) {
-	m := make(map[int][]int)
+func QueryHostGroups() (m map[int][]int, err error) {
+	m = make(map[int][]int)
+	url := fmt.Sprintf("%s/api/v1/group", g.Config().Api.PlusApi)
+	groups := make([]*models.GrpHost, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&groups).Get(url)
+	defer utils.DebugPrintError(err)
 
-	sql := "select grp_id, host_id from grp_host"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return m, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var gid, hid int
-		err = rows.Scan(&gid, &hid)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
-		}
-
-		if _, exists := m[hid]; exists {
-			m[hid] = append(m[hid], gid)
-		} else {
-			m[hid] = []int{gid}
+	if resp.StatusCode() == http.StatusOK {
+		for _, group := range groups {
+			if _, exists := m[int(group.GrpId)]; exists {
+				m[int(group.HostId)] = append(m[int(group.HostId)], int(group.GrpId))
+			} else {
+				m[int(group.HostId)] = []int{int(group.GrpId)}
+			}
 		}
 	}
-
 	return m, nil
 }

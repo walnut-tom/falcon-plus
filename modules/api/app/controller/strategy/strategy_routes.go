@@ -39,4 +39,5 @@ func Routes(r *gin.Engine) {
 	met := r.Group("/api/v1/metric")
 	met.Use(utils.AuthSessionMidd)
 	met.GET("default_list", MetricQuery)
+	met.GET("builtin", queryBuiltinMetrics)
 }

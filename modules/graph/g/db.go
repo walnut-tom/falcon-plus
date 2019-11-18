@@ -16,9 +16,15 @@ package g
 
 import (
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
+	log "github.com/sirupsen/logrus"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/lib/pq"
+	"github.com/open-falcon/falcon-plus/common/utils"
 )
 
 // TODO 草草的写了一个db连接池,优化下
@@ -68,7 +74,7 @@ func GetDbConn(connName string) (c *sql.DB, e error) {
 
 // 创建一个新的mysql连接
 func makeDbConn() (conn *sql.DB, err error) {
-	conn, err = sql.Open("mysql", Config().DB.Dsn)
+	conn, err = sql.Open(utils.SQLDriver(), Config().DB.Dsn)
 	if err != nil {
 		return nil, err
 	}

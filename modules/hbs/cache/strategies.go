@@ -15,13 +15,13 @@
 package cache
 
 import (
+	log "github.com/sirupsen/logrus"
+	"strconv"
+	"sync"
+
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/hbs/db"
 	"github.com/toolkits/container/set"
-	"log"
-	"strconv"
-	"strings"
-	"sync"
 )
 
 type SafeStrategies struct {
@@ -97,7 +97,7 @@ func GetBuiltinMetrics(hostname string) ([]*model.BuiltinMetric, error) {
 		tidStrArr[i] = strconv.Itoa(tidSlice[i])
 	}
 
-	return db.QueryBuiltinMetrics(strings.Join(tidStrArr, ","))
+	return db.QueryBuiltinMetrics(tidStrArr)
 }
 
 func ParentIds(allTpls map[int]*model.Template, tid int) (ret []int) {

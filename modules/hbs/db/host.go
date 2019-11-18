@@ -16,60 +16,45 @@ package db
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/open-falcon/falcon-plus/common/model"
-	"log"
-	"time"
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
+
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/go-resty/resty/v2"
 )
 
-func QueryHosts() (map[string]int, error) {
-	m := make(map[string]int)
-
-	sql := "select id, hostname from host"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return m, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			id       int
-			hostname string
-		)
-
-		err = rows.Scan(&id, &hostname)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
+func QueryHosts() (m map[string]int, err error) {
+	defer utils.DebugPrintError(err)
+	m = make(map[string]int)
+	url := fmt.Sprintf("%s/api/v1/host", g.Config().Api.PlusApi)
+	hosts := make([]*models.Host, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&hosts).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, host := range hosts {
+			m[host.Hostname] = int(host.Id)
 		}
-
-		m[hostname] = id
 	}
-
-	return m, nil
+	return m, err
 }
 
-func QueryMonitoredHosts() (map[int]*model.Host, error) {
-	hosts := make(map[int]*model.Host)
-	now := time.Now().Unix()
-	sql := fmt.Sprintf("select id, hostname from host where maintain_begin > %d or maintain_end < %d", now, now)
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return hosts, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		t := model.Host{}
-		err = rows.Scan(&t.Id, &t.Name)
-		if err != nil {
-			log.Println("WARN:", err)
-			continue
+func QueryMonitoredHosts() (m map[int]*model.Host, err error) {
+	defer utils.DebugPrintError(err)
+	m = make(map[int]*model.Host)
+	url := fmt.Sprintf("%s/api/v1/host?monitored=true", g.Config().Api.PlusApi)
+	hosts := make([]*models.Host, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&hosts).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, host := range hosts {
+			m[int(host.Id)] = &model.Host{
+				Id:   int(host.Id),
+				Name: host.Hostname,
+			}
 		}
-		hosts[t.Id] = &t
 	}
-
-	return hosts, nil
+	return m, err
 }

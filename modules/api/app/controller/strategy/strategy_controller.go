@@ -23,15 +23,36 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/common/xorm/storage"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 	"github.com/spf13/viper"
 )
+
+func queryBuiltinMetrics(c *gin.Context) {
+	tids := c.QueryArray("tid")
+	metics, err := storage.GetStrategyService().QueryBuiltinMetrics(config.Engines().Portal(), tids)
+	if err != nil {
+		h.JSONR(c, badstatus, err)
+		return
+	}
+	h.JSONR(c, metics)
+}
 
 func GetStrategys(c *gin.Context) {
 	var strategys []f.Strategy
 	tidtmp := c.DefaultQuery("tid", "")
 	if tidtmp == "" {
+		ss, err := storage.GetStrategyService().QueryStrategies(config.Engines().Portal())
+		if err == nil {
+			for _, strategy := range ss {
+				strategys = append(strategys, toFalconStrategy(strategy))
+			}
+			h.JSONR(c, strategys)
+			return
+		}
 		h.JSONR(c, badstatus, "tid is missing")
 		return
 	}
@@ -40,13 +61,32 @@ func GetStrategys(c *gin.Context) {
 		h.JSONR(c, badstatus, err)
 		return
 	}
-	dt := db.Falcon.Where("tpl_id = ?", tid).Find(&strategys)
-	if dt.Error != nil {
-		h.JSONR(c, badstatus, dt.Error)
+
+	ss, err := storage.GetStrategyService().QueryStrategiesByTemplateId(config.Engines().Portal(), tid)
+	if err == nil {
+		for _, strategy := range ss {
+			strategys = append(strategys, toFalconStrategy(strategy))
+		}
+		h.JSONR(c, strategys)
 		return
 	}
-	h.JSONR(c, strategys)
-	return
+}
+
+func toFalconStrategy(s *models.Strategy) (result f.Strategy) {
+	return f.Strategy{
+		ID:         s.Id,
+		Metric:     s.Metric,
+		Tags:       s.Tags,
+		MaxStep:    s.MaxStep,
+		Priority:   s.Priority,
+		Func:       s.Func,
+		Op:         s.Op,
+		RightValue: s.RightValue,
+		Note:       s.Note,
+		RunBegin:   s.RunBegin,
+		RunEnd:     s.RunEnd,
+		TplId:      s.TplId,
+	}
 }
 
 type APICreateStrategyInput struct {

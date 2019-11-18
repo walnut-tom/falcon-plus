@@ -22,9 +22,9 @@ import (
 	"strings"
 	"syscall"
 
+	yaag_gin "github.com/betacraft/yaag/gin"
+	"github.com/betacraft/yaag/yaag"
 	"github.com/gin-gonic/gin"
-	yaag_gin "github.com/masato25/yaag/gin"
-	"github.com/masato25/yaag/yaag"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller"
 	"github.com/open-falcon/falcon-plus/modules/api/config"
 	"github.com/open-falcon/falcon-plus/modules/api/graph"
@@ -75,6 +75,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("db conn failed with error %s", err.Error())
 	}
+	defer config.CloseDB()
+
+	err = config.InitEngine(viper.GetBool("db.db_bug"), viper.GetViper())
+	if err != nil {
+		log.Fatalf("db engine failed with error %s", err.Error())
+	}
+	defer config.CloseEngine()
 
 	if viper.GetString("log_level") != "debug" {
 		gin.SetMode(gin.ReleaseMode)

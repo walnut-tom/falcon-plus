@@ -17,14 +17,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/open-falcon/falcon-plus/modules/hbs/cache"
 	"github.com/open-falcon/falcon-plus/modules/hbs/db"
 	"github.com/open-falcon/falcon-plus/modules/hbs/g"
 	"github.com/open-falcon/falcon-plus/modules/hbs/http"
 	"github.com/open-falcon/falcon-plus/modules/hbs/rpc"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -56,7 +57,6 @@ func main() {
 	go func() {
 		<-sigs
 		fmt.Println()
-		db.DB.Close()
 		os.Exit(0)
 	}()
 

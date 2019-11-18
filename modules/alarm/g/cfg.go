@@ -16,7 +16,7 @@ package g
 
 import (
 	"encoding/json"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 
 	"github.com/toolkits/file"
@@ -46,12 +46,6 @@ type ApiConfig struct {
 	IM           string `json:"im"`
 }
 
-type FalconPortalConfig struct {
-	Addr string `json:"addr"`
-	Idle int    `json:"idle"`
-	Max  int    `json:"max"`
-}
-
 type WorkerConfig struct {
 	IM   int `json:"im"`
 	Sms  int `json:"sms"`
@@ -64,13 +58,12 @@ type HousekeeperConfig struct {
 }
 
 type GlobalConfig struct {
-	LogLevel     string              `json:"log_level"`
-	FalconPortal *FalconPortalConfig `json:"falcon_portal"`
-	Http         *HttpConfig         `json:"http"`
-	Redis        *RedisConfig        `json:"redis"`
-	Api          *ApiConfig          `json:"api"`
-	Worker       *WorkerConfig       `json:"worker"`
-	Housekeeper  *HousekeeperConfig  `json:"Housekeeper"`
+	LogLevel    string             `json:"log_level"`
+	Http        *HttpConfig        `json:"http"`
+	Redis       *RedisConfig       `json:"redis"`
+	Api         *ApiConfig         `json:"api"`
+	Worker      *WorkerConfig      `json:"worker"`
+	Housekeeper *HousekeeperConfig `json:"Housekeeper"`
 }
 
 var (

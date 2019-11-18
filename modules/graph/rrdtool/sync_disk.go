@@ -17,7 +17,7 @@ package rrdtool
 import (
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 

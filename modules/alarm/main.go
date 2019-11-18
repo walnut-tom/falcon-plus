@@ -25,7 +25,6 @@ import (
 	"github.com/open-falcon/falcon-plus/modules/alarm/cron"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	"github.com/open-falcon/falcon-plus/modules/alarm/http"
-	"github.com/open-falcon/falcon-plus/modules/alarm/model"
 )
 
 func main() {
@@ -56,7 +55,6 @@ func main() {
 	}
 
 	g.InitRedisConnPool()
-	model.InitDatabase()
 	cron.InitSenderWorker()
 
 	go http.Start()

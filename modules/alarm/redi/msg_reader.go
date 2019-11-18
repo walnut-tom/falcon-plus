@@ -16,6 +16,7 @@ package redi
 
 import (
 	"encoding/json"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	"github.com/open-falcon/falcon-plus/modules/alarm/model"

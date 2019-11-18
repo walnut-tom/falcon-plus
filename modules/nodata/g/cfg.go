@@ -16,9 +16,11 @@ package g
 
 import (
 	"encoding/json"
-	"github.com/toolkits/file"
-	"log"
 	"sync"
+
+	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
+	"github.com/toolkits/file"
 )
 
 type HttpConfig struct {
@@ -32,13 +34,6 @@ type PlusAPIConfig struct {
 	ConnectTimeout int32  `json:"connectTimeout"`
 	RequestTimeout int32  `json:"requestTimeout"`
 }
-
-type NdConfig struct {
-	Enabled bool   `json:"enabled"`
-	Dsn     string `json:"dsn"`
-	MaxIdle int32  `json:"maxIdle"`
-}
-
 type CollectorConfig struct {
 	Enabled    bool  `json:"enabled"`
 	Batch      int32 `json:"batch"`
@@ -57,7 +52,6 @@ type GlobalConfig struct {
 	Debug     bool             `json:"debug"`
 	Http      *HttpConfig      `json:"http"`
 	PlusApi   *PlusAPIConfig   `json:"plus_api"`
-	Config    *NdConfig        `json:"config"`
 	Collector *CollectorConfig `json:"collector"`
 	Sender    *SenderConfig    `json:"sender"`
 }
@@ -101,4 +95,14 @@ func ParseConfig(cfg string) {
 	config = &c
 
 	log.Println("g.ParseConfig ok, file ", cfg)
+	Init()
+}
+
+//Init init resty
+func Init() {
+	token, _ := json.Marshal(map[string]string{
+		"name": "default",
+		"sig":  Config().PlusApi.Token,
+	})
+	resty.New().SetHeader("Apitoken", string(token))
 }

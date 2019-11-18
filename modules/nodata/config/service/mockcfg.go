@@ -16,11 +16,17 @@ package service
 
 import (
 	"fmt"
-	"log"
+	"net/http"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/go-resty/resty/v2"
+
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
+	"github.com/open-falcon/falcon-plus/common/utils"
 	cutils "github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 )
 
 type MockCfg struct {
@@ -38,62 +44,49 @@ type MockCfg struct {
 // 当 grp展开结果 与 host结果 存在冲突时, 优先选择 host结果
 func GetMockCfgFromDB() map[string]*cmodel.NodataConfig {
 	ret := make(map[string]*cmodel.NodataConfig)
+	var err error
+	defer utils.DebugPrintError(err)
+	cfg := g.Config()
+	url := fmt.Sprintf("%s/api/v1/nodata/mockcfgs", cfg.Api.PlusApi)
+	mockConfigs := make([]*models.MockConfig, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&mockConfigs).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, mockConfig := range mockConfigs {
+			t := MockCfg{}
+			t.Tags = cutils.DictedTagstring(mockConfig.Tags)
 
-	dbConn, err := GetDbConn("nodata.mockcfg")
-	if err != nil {
-		log.Println("db.get_conn error, mockcfg", err)
-		return ret
-	}
-
-	q := fmt.Sprintf("SELECT id,name,obj,obj_type,metric,tags,dstype,step,mock FROM mockcfg")
-	rows, err := dbConn.Query(q)
-	if err != nil {
-		log.Println("db.query error, mockcfg", err)
-		return ret
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		t := MockCfg{}
-		tags := ""
-		err := rows.Scan(&t.Id, &t.Name, &t.Obj, &t.ObjType, &t.Metric, &tags, &t.Type, &t.Step, &t.Mock)
-		if err != nil {
-			log.Println("db.scan error, mockcfg", err)
-			continue
-		}
-		t.Tags = cutils.DictedTagstring(tags)
-
-		err = checkMockCfg(&t)
-		if err != nil {
-			log.Println("check mockcfg, error:", err)
-			continue
-		}
-
-		endpoints := getEndpoint(t.ObjType, t.Obj)
-		if len(endpoints) < 1 {
-			continue
-		}
-
-		for _, ep := range endpoints {
-			uuid := cutils.PK(ep, t.Metric, t.Tags)
-			ncfg := cmodel.NewNodataConfig(t.Id, t.Name, t.ObjType, ep, t.Metric, t.Tags, t.Type, t.Step, t.Mock)
-
-			val, found := ret[uuid]
-			if !found { // so cute, it's the first one
-				ret[uuid] = ncfg
+			err = checkMockCfg(&t)
+			if err != nil {
+				log.Println("check mockcfg, error:", err)
 				continue
 			}
 
-			if isSpuerNodataCfg(val, ncfg) {
-				// val is spuer than ncfg, so drop ncfg
-				log.Printf("nodata.mockcfg conflict, %s, used %s, drop %s", uuid, val.Name, ncfg.Name)
-			} else {
-				ret[uuid] = ncfg // overwrite the old one
-				log.Printf("nodata.mockcfg conflict, %s, used %s, drop %s", uuid, ncfg.Name, val.Name)
+			endpoints := getEndpoint(t.ObjType, t.Obj)
+			if len(endpoints) < 1 {
+				continue
+			}
+
+			for _, ep := range endpoints {
+				uuid := cutils.PK(ep, t.Metric, t.Tags)
+				ncfg := cmodel.NewNodataConfig(t.Id, t.Name, t.ObjType, ep, t.Metric, t.Tags, t.Type, t.Step, t.Mock)
+
+				val, found := ret[uuid]
+				if !found { // so cute, it's the first one
+					ret[uuid] = ncfg
+					continue
+				}
+
+				if isSpuerNodataCfg(val, ncfg) {
+					// val is spuer than ncfg, so drop ncfg
+					log.Printf("nodata.mockcfg conflict, %s, used %s, drop %s", uuid, val.Name, ncfg.Name)
+				} else {
+					ret[uuid] = ncfg // overwrite the old one
+					log.Printf("nodata.mockcfg conflict, %s, used %s, drop %s", uuid, ncfg.Name, val.Name)
+				}
 			}
 		}
 	}
-
 	return ret
 }
 

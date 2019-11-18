@@ -15,7 +15,7 @@
 package judge
 
 import (
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 func Start() {

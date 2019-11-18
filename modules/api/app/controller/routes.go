@@ -18,11 +18,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/open-falcon/falcon-plus/modules/api/app/controller/aggregator"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/alarm"
+	"github.com/open-falcon/falcon-plus/modules/api/app/controller/dashboard"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/dashboard_graph"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/dashboard_screen"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/expression"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/graph"
+	"github.com/open-falcon/falcon-plus/modules/api/app/controller/group"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/host"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/mockcfg"
 	"github.com/open-falcon/falcon-plus/modules/api/app/controller/strategy"
@@ -36,6 +39,7 @@ func StartGin(port string, r *gin.Engine) {
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Hello, I'm Falcon+ (｡A｡)")
 	})
+	// r.Use(utils.AuthSessionMidd)
 	graph.Routes(r)
 	uic.Routes(r)
 	template.Routes(r)
@@ -46,5 +50,8 @@ func StartGin(port string, r *gin.Engine) {
 	dashboard_graph.Routes(r)
 	dashboard_screen.Routes(r)
 	alarm.Routes(r)
+	aggregator.Routes(r)
+	group.Routes(r)
+	dashboard.Routes(r)
 	r.Run(port)
 }

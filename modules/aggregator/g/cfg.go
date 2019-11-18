@@ -16,9 +16,10 @@ package g
 
 import (
 	"encoding/json"
-	"github.com/toolkits/file"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
+
+	"github.com/toolkits/file"
 )
 
 type HttpConfig struct {
@@ -26,11 +27,9 @@ type HttpConfig struct {
 	Listen  string `json:"listen"`
 }
 
-type DatabaseConfig struct {
-	Addr     string `json:"addr"`
-	Idle     int    `json:"idle"`
-	Ids      []int  `json:"ids"`
-	Interval int64  `json:"interval"`
+type ClusterConfig struct {
+	Ids      []int `json:"ids"`
+	Interval int64 `json:"interval"`
 }
 
 type ApiConfig struct {
@@ -42,10 +41,10 @@ type ApiConfig struct {
 }
 
 type GlobalConfig struct {
-	Debug    bool            `json:"debug"`
-	Http     *HttpConfig     `json:"http"`
-	Database *DatabaseConfig `json:"database"`
-	Api      *ApiConfig      `json:"api"`
+	Debug   bool           `json:"debug"`
+	Http    *HttpConfig    `json:"http"`
+	Cluster *ClusterConfig `json:"cluster"`
+	Api     *ApiConfig     `json:"api"`
 }
 
 var (

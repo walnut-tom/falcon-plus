@@ -43,6 +43,7 @@ func Routes(r *gin.Engine) {
 
 	//plugins
 	hostr.GET("/hostgroup/:host_group/plugins", GetPluginOfGrp)
+	hostr.GET("/plugin", queryPlugins)
 	hostr.POST("/plugin", CreatePlugin)
 	hostr.DELETE("/plugin/:id", DeletePlugin)
 
@@ -61,6 +62,12 @@ func Routes(r *gin.Engine) {
 	//host
 	hostr.GET("/host/:host_id/template", GetTplsRelatedHost)
 	hostr.GET("/host/:host_id/hostgroup", GetGrpsRelatedHost)
+
+	//host hbs agent 更新
+	hostr.POST("/host", createHost)
+	hostr.PATCH("/host", patchHost)
+	hostr.GET("/host", queryHosts)
+	hostr.GET("/host?monitored=true", queryMonitoredHosts)
 
 	//maintain
 	hostr.POST("/host/maintain", SetMaintain)

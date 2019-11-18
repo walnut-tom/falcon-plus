@@ -15,9 +15,10 @@
 package cron
 
 import (
-	"log"
 	"math/rand"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
 )

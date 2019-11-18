@@ -17,7 +17,7 @@ package funcs
 import (
 	"github.com/open-falcon/falcon-plus/common/model"
 	"github.com/toolkits/nux"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 func LoadAvgMetrics() []*model.MetricValue {

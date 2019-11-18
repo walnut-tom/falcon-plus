@@ -39,6 +39,11 @@ func Routes(r *gin.Engine) {
 	tmpr.POST("/action", CreateActionToTmplate)
 	tmpr.PUT("/action", UpdateActionToTmplate)
 
+	tmpsr := r.Group("/api/v1/templates")
+	tmpsr.Use(utils.AuthSessionMidd)
+	tmpsr.GET("", queryTemplates)
+	tmpsr.GET("/group", queryGroupTemplates)
+
 	actr := r.Group("/api/v1/action")
 	actr.GET("/:act_id", GetActionByID)
 

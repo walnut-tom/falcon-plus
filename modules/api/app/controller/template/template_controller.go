@@ -20,8 +20,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/common/xorm/storage"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,6 +34,26 @@ type APIGetTemplatesOutput struct {
 type CTemplate struct {
 	Template   f.Template `json:"template"`
 	ParentName string     `json:"parent_name"`
+}
+
+func queryTemplates(c *gin.Context) {
+	var err error
+	var templates []*models.Template
+	templates, err = storage.GetTemplateService().QueryTemplates(config.Engines().Portal())
+	if err == nil {
+		h.JSONR(c, templates)
+		return
+	}
+}
+
+func queryGroupTemplates(c *gin.Context) {
+	var err error
+	var groupTemplates []models.GrpTpl
+	groupTemplates, err = storage.GetTemplateService().QueryGroupTemplates(config.Engines().Portal())
+	if err == nil {
+		h.JSONR(c, groupTemplates)
+		return
+	}
 }
 
 func GetTemplates(c *gin.Context) {
@@ -50,9 +73,10 @@ func GetTemplates(c *gin.Context) {
 	var templates []f.Template
 	q := c.DefaultQuery("q", ".+")
 	if limit != -1 && page != -1 {
-		dt = db.Falcon.Raw("SELECT * from tpl WHERE tpl_name regexp ? limit ?,?", q, page, limit).Scan(&templates)
+		dt = db.Falcon.Raw(
+			fmt.Sprintf("SELECT * from tpl WHERE tpl_name ~* %s limit %d,%d", q, page, limit)).Scan(&templates)
 	} else {
-		dt = db.Falcon.Where("tpl_name regexp ?", q).Find(&templates)
+		dt = db.Falcon.Where("tpl_name ~* ?", q).Find(&templates)
 	}
 	if dt.Error != nil {
 		log.Infof(dt.Error.Error())
@@ -81,7 +105,7 @@ func GetTemplatesSimple(c *gin.Context) {
 	var dt *gorm.DB
 	templates := []f.Template{}
 	q := c.DefaultQuery("q", ".+")
-	dt = db.Falcon.Select("id, tpl_name").Where("tpl_name regexp ?", q).Find(&templates)
+	dt = db.Falcon.Select("id, tpl_name").Where("tpl_name ~* ?", q).Find(&templates)
 	if dt.Error != nil {
 		log.Infof(dt.Error.Error())
 		h.JSONR(c, badstatus, dt.Error)

@@ -1,11 +1,11 @@
 {
 	"log_level": "debug",
 	"db": {
-		"falcon_portal": "root:@tcp(127.0.0.1:3306)/falcon_portal?charset=utf8&parseTime=True&loc=Local",
-		"graph": "root:@tcp(127.0.0.1:3306)/graph?charset=utf8&parseTime=True&loc=Local",
-		"uic": "root:@tcp(127.0.0.1:3306)/uic?charset=utf8&parseTime=True&loc=Local",
-		"dashboard": "root:@tcp(127.0.0.1:3306)/dashboard?charset=utf8&parseTime=True&loc=Local",
-		"alarms": "root:@tcp(127.0.0.1:3306)/alarms?charset=utf8&parseTime=True&loc=Local",
+		"falcon_portal": "postgres://postgres:postgres@10.1.5.8/falcon_portal?sslmode=disable",
+		"graph": "postgres://postgres:postgres@10.1.5.8/graph?sslmode=disable",
+		"uic": "postgres://postgres:postgres@10.1.5.8/uic?sslmode=disable",
+		"dashboard": "postgres://postgres:postgres@10.1.5.8/dashboard?sslmode=disable",
+		"alarms": "postgres://postgres:postgres@10.1.5.8/alarms?sslmode=disable",
 		"db_bug": true
 	},
 	"graphs": {
@@ -17,6 +17,11 @@
 		"conn_timeout": 1000,
 		"call_timeout": 5000,
 		"numberOfReplicas": 500
+	},
+	"redis":{
+		"address": "localhost:6379",
+		"db": 9,
+		"expiration": "1d"
 	},
 	"metric_list_file": "./api/data/metric",
 	"web_port": ":8080",

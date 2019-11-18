@@ -19,7 +19,12 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/open-falcon/falcon-plus/common/utils"
 	"github.com/spf13/viper"
 )
 
@@ -49,7 +54,7 @@ func SetLogLevel(loggerlevel bool) {
 
 func InitDB(loggerlevel bool, vip *viper.Viper) (err error) {
 	var p *sql.DB
-	portal, err := gorm.Open("mysql", vip.GetString("db.falcon_portal"))
+	portal, err := gorm.Open(utils.SQLDialect(), vip.GetString("db.falcon_portal"))
 	portal.Dialect().SetDB(p)
 	portal.LogMode(loggerlevel)
 	if err != nil {
@@ -59,7 +64,7 @@ func InitDB(loggerlevel bool, vip *viper.Viper) (err error) {
 	dbp.Falcon = portal
 
 	var g *sql.DB
-	graphd, err := gorm.Open("mysql", vip.GetString("db.graph"))
+	graphd, err := gorm.Open(utils.SQLDialect(), vip.GetString("db.graph"))
 	graphd.Dialect().SetDB(g)
 	graphd.LogMode(loggerlevel)
 	if err != nil {
@@ -69,7 +74,7 @@ func InitDB(loggerlevel bool, vip *viper.Viper) (err error) {
 	dbp.Graph = graphd
 
 	var u *sql.DB
-	uicd, err := gorm.Open("mysql", vip.GetString("db.uic"))
+	uicd, err := gorm.Open(utils.SQLDialect(), vip.GetString("db.uic"))
 	uicd.Dialect().SetDB(u)
 	uicd.LogMode(loggerlevel)
 	if err != nil {
@@ -79,7 +84,7 @@ func InitDB(loggerlevel bool, vip *viper.Viper) (err error) {
 	dbp.Uic = uicd
 
 	var d *sql.DB
-	dashd, err := gorm.Open("mysql", vip.GetString("db.dashboard"))
+	dashd, err := gorm.Open(utils.SQLDialect(), vip.GetString("db.dashboard"))
 	dashd.Dialect().SetDB(d)
 	dashd.LogMode(loggerlevel)
 	if err != nil {
@@ -89,7 +94,7 @@ func InitDB(loggerlevel bool, vip *viper.Viper) (err error) {
 	dbp.Dashboard = dashd
 
 	var alm *sql.DB
-	almd, err := gorm.Open("mysql", vip.GetString("db.alarms"))
+	almd, err := gorm.Open(utils.SQLDialect(), vip.GetString("db.alarms"))
 	almd.Dialect().SetDB(alm)
 	almd.LogMode(loggerlevel)
 	if err != nil {

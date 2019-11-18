@@ -15,13 +15,14 @@
 package cron
 
 import (
+	"strings"
+	"time"
+
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	"github.com/open-falcon/falcon-plus/modules/alarm/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/redi"
 	log "github.com/sirupsen/logrus"
 	"github.com/toolkits/net/httplib"
-	"strings"
-	"time"
 )
 
 func ConsumeSms() {

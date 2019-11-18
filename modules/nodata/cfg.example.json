@@ -10,11 +10,6 @@
         "addr": "http://127.0.0.1:8080",
         "token": "default-token-used-in-server-side"
     },
-    "config": {
-        "enabled": true,
-        "dsn": "root:@tcp(127.0.0.1:3306)/falcon_portal?loc=Local&parseTime=true&wait_timeout=604800",
-        "maxIdle": 4
-    },
     "collector":{
         "enabled": true,
         "batch": 200,

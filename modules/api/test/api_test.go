@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/masato25/resty"
+	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/spf13/viper"
@@ -127,7 +127,7 @@ func init_testing_data() {
 
 func get_session_token() (string, error) {
 	rr := map[string]interface{}{}
-	resp, _ := resty.R().
+	resp, _ := resty.New().R().
 		SetQueryParam("name", root_user_name).
 		SetQueryParam("password", root_user_password).
 		SetResult(&rr).
@@ -146,7 +146,7 @@ func TestUser(t *testing.T) {
 	var api_token string = ""
 
 	Convey("Create root user: POST /user/create", t, func() {
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(map[string]string{
 				"name":     root_user_name,
@@ -165,7 +165,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Get user info by name: GET /user/name/:user", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/name/%s", api_v1, root_user_name))
@@ -178,7 +178,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Get user info by id: GET /user/u/:uid", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/u/%v", api_v1, root_user_id))
@@ -189,7 +189,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Update current user: PUT /user/update", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(map[string]string{
@@ -205,7 +205,7 @@ func TestUser(t *testing.T) {
 
 		Convey("Get user info by name: GET /user/name/:user", func() {
 			*rr = map[string]interface{}{}
-			resp, _ := resty.R().
+			resp, _ := resty.New().R().
 				SetHeader("Apitoken", api_token).
 				SetResult(rr).
 				Get(fmt.Sprintf("%s/user/name/%s", api_v1, root_user_name))
@@ -217,7 +217,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Change password: PUT /user/cgpasswd", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(map[string]string{
@@ -233,7 +233,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Get user list: GET /user/users", t, func() {
 		r := []map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(&r).
 			Get(fmt.Sprintf("%s/user/users", api_v1))
@@ -244,7 +244,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Get current user: POST /user/current", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/current", api_v1))
@@ -255,7 +255,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Login user: POST /user/login", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetQueryParam("name", root_user_name).
 			SetQueryParam("password", root_user_password).
 			SetResult(rr).
@@ -270,7 +270,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Auth user by session: GET /user/auth_session", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/auth_session", api_v1))
@@ -281,7 +281,7 @@ func TestUser(t *testing.T) {
 
 	Convey("Logout user: GET /user/logout", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/logout", api_v1))
@@ -296,7 +296,7 @@ func TestAdmin(t *testing.T) {
 	var api_token string = ""
 
 	Convey("Login as root", t, func() {
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetQueryParam("name", root_user_name).SetQueryParam("password", root_user_password).SetResult(rr).
 			Post(fmt.Sprintf("%s/user/login", api_v1))
 		So(resp.StatusCode(), ShouldEqual, 200)
@@ -309,7 +309,7 @@ func TestAdmin(t *testing.T) {
 
 	Convey("Get user info by name: GET /user/name/:user", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/name/%s", api_v1, test_user_name))
@@ -321,7 +321,7 @@ func TestAdmin(t *testing.T) {
 
 	Convey("Change user role: PUT /admin/change_user_role", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetHeader("Content-Type", "application/json").
 			SetBody(fmt.Sprintf(`{"user_id": %v,"admin": "yes"}`, test_user_id)).
@@ -333,7 +333,7 @@ func TestAdmin(t *testing.T) {
 
 		Convey("Get user info by name: GET /user/name/:user", func() {
 			*rr = map[string]interface{}{}
-			resp, _ := resty.R().
+			resp, _ := resty.New().R().
 				SetHeader("Apitoken", api_token).
 				SetResult(rr).
 				Get(fmt.Sprintf("%s/user/name/%s", api_v1, test_user_name))
@@ -345,7 +345,7 @@ func TestAdmin(t *testing.T) {
 
 	Convey("Change user passwd: PUT /admin/change_user_passwd", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetHeader("Content-Type", "application/json").
 			SetBody(fmt.Sprintf(`{"user_id": %v,"password": "%s"}`, test_user_id, test_user_password)).
@@ -358,7 +358,7 @@ func TestAdmin(t *testing.T) {
 
 	Convey("Change user profile: PUT /admin/change_user_profile", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetHeader("Content-Type", "application/json").
 			SetBody(fmt.Sprintf(`{"user_id": %v,"cnname": "%s", "email": "%s"}`,
@@ -371,7 +371,7 @@ func TestAdmin(t *testing.T) {
 
 		Convey("Get user info by name: GET /user/name/:user", func() {
 			*rr = map[string]interface{}{}
-			resp, _ := resty.R().
+			resp, _ := resty.New().R().
 				SetHeader("Apitoken", api_token).
 				SetResult(rr).
 				Get(fmt.Sprintf("%s/user/name/%s", api_v1, test_user_name))
@@ -383,7 +383,7 @@ func TestAdmin(t *testing.T) {
 
 	Convey("Admin login user: POST /admin/login", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(map[string]string{
@@ -404,7 +404,7 @@ func TestTeam(t *testing.T) {
 	var rr *map[string]interface{} = &map[string]interface{}{}
 
 	Convey("Login as root", t, func() {
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetQueryParam("name", root_user_name).SetQueryParam("password", root_user_password).SetResult(rr).
 			Post(fmt.Sprintf("%s/user/login", api_v1))
 		So(resp.StatusCode(), ShouldEqual, 200)
@@ -417,7 +417,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Get user info by name: GET /user/name/:user", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Get(fmt.Sprintf("%s/user/name/%s", api_v1, root_user_name))
@@ -430,7 +430,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Create team: POST /team", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(fmt.Sprintf(`{"team_name": "%s","resume": "i'm descript", "users": [1]}`, test_team_name)).
@@ -443,7 +443,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Get team by name: GET /team/name/:name", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().SetHeader("Apitoken", api_token).SetResult(rr).
+		resp, _ := resty.New().R().SetHeader("Apitoken", api_token).SetResult(rr).
 			Get(fmt.Sprintf("%s/team/name/%s", api_v1, test_team_name))
 		So(resp.StatusCode(), ShouldEqual, 200)
 		So(*rr, ShouldNotBeEmpty)
@@ -455,7 +455,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Get team by id: GET /team/t/:tid", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().SetHeader("Apitoken", api_token).SetResult(rr).
+		resp, _ := resty.New().R().SetHeader("Apitoken", api_token).SetResult(rr).
 			Get(fmt.Sprintf("%s/team/t/%v", api_v1, test_team_id))
 		So(resp.StatusCode(), ShouldEqual, 200)
 		So(*rr, ShouldNotBeEmpty)
@@ -466,7 +466,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Update team by id: PUT /team", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(fmt.Sprintf(`{"team_id": %v,"resume": "descript2", "name":"%v", "users": [1]}`,
@@ -479,7 +479,7 @@ func TestTeam(t *testing.T) {
 
 		Convey("Get team by name: GET /team/name/:name", func() {
 			*rr = map[string]interface{}{}
-			resp, _ := resty.R().SetHeader("Apitoken", api_token).SetResult(rr).
+			resp, _ := resty.New().R().SetHeader("Apitoken", api_token).SetResult(rr).
 				Get(fmt.Sprintf("%s/team/name/%s", api_v1, test_team_name))
 			So(resp.StatusCode(), ShouldEqual, 200)
 			So(*rr, ShouldNotBeEmpty)
@@ -489,7 +489,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Add users to team: POST /team/user", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Apitoken", api_token).
 			SetBody(map[string]interface{}{
@@ -505,7 +505,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Get teams which user belong to: GET /user/u/:uid/teams", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().SetHeader("Apitoken", api_token).SetResult(rr).
+		resp, _ := resty.New().R().SetHeader("Apitoken", api_token).SetResult(rr).
 			Get(fmt.Sprintf("%s/user/u/%v/teams", api_v1, root_user_id))
 		So(resp.StatusCode(), ShouldEqual, 200)
 		So(*rr, ShouldNotBeEmpty)
@@ -514,7 +514,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Check user in teams or not: GET /user/u/:uid/in_teams", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetQueryParam("team_names", test_team_name).
 			SetResult(rr).
@@ -526,7 +526,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Get team list: GET /team", t, func() {
 		var r []map[string]interface{}
-		resp, _ := resty.R().SetHeader("Apitoken", api_token).SetResult(&r).
+		resp, _ := resty.New().R().SetHeader("Apitoken", api_token).SetResult(&r).
 			Get(fmt.Sprintf("%s/team", api_v1))
 		So(resp.StatusCode(), ShouldEqual, 200)
 		So(r, ShouldNotBeEmpty)
@@ -537,7 +537,7 @@ func TestTeam(t *testing.T) {
 
 	Convey("Delete team by id: DELETE /team/:tid", t, func() {
 		*rr = map[string]interface{}{}
-		resp, _ := resty.R().
+		resp, _ := resty.New().R().
 			SetHeader("Apitoken", api_token).
 			SetResult(rr).
 			Delete(fmt.Sprintf("%s/team/%v", api_v1, test_team_id))

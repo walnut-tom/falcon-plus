@@ -17,11 +17,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/open-falcon/falcon-plus/modules/alarm/g"
 	log "github.com/sirupsen/logrus"
 	"github.com/toolkits/net/httplib"
-	"sync"
-	"time"
 )
 
 //TODO:use api/app/model/falcon_portal/action.go

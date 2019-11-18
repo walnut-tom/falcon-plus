@@ -18,8 +18,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	nsema "github.com/toolkits/concurrent/semaphore"
 	ntime "github.com/toolkits/time"
@@ -38,6 +39,31 @@ const (
 var (
 	semaIndexUpdateAllTask = nsema.NewSemaphore(ConcurrentOfUpdateIndexAll) //全量同步任务 并发控制器
 	semaIndexUpdateAll     = nsema.NewSemaphore(4)                          // 索引全量更新时的mysql操作并发控制
+
+	endpointSqls = map[string]string{
+		"mysql": `INSERT INTO endpoint(endpoint, ts, t_create) VALUES (?, ?, NOW()) 
+		ON DUPLICATE KEY UPDATE ts=?, t_modify=NOW()`,
+		"postgres": `INSERT INTO endpoint(endpoint, ts, t_create) VALUES ($1,$2, NOW()) 
+		ON conflict(endpoint) DO UPDATE SET ts=$3, t_modify=NOW()`,
+	}
+
+	tagEndpointSqls = map[string]string{
+		"mysql": `INSERT INTO tag_endpoint(tag, endpoint_id, ts, t_create)
+			VALUES (?, ?, ?, NOW())
+			ON DUPLICATE KEY UPDATE ts=?, t_modify=NOW()`,
+		"postgres": `INSERT INTO tag_endpoint(tag, endpoint_id, ts, t_create)
+			VALUES ($1,$2,$3, NOW())
+			ON conflict(tag,endpoint_id) DO UPDATE SET ts=$4, t_modify=NOW()`,
+	}
+
+	endpointCounterSqls = map[string]string{
+		"mysql": `INSERT INTO endpoint_counter(endpoint_id,counter,step,type,ts,t_create)
+		VALUES (?,?,?,?,?,NOW())
+		ON DUPLICATE KEY UPDATE ts=?,step=?,type=?,t_modify=NOW()`,
+		"postgres": `INSERT INTO endpoint_counter(endpoint_id,counter,step,type,ts,t_create)
+		VALUES ($1,$2,$3,$4,$5,NOW())
+		ON conflict(endpoint_id,counter) DO UPDATE SET ts=$6,step=$7,type=$8,t_modify=NOW()`,
+	}
 )
 
 // 索引全量更新的当前并行数
@@ -160,9 +186,7 @@ func updateIndexFromOneItem(item *cmodel.GraphItem, conn *sql.DB) error {
 	var endpointId int64 = -1
 
 	// endpoint表
-	sqlStr := `INSERT INTO endpoint(endpoint, ts, t_create)
-		VALUES (?, ?, NOW())
-		ON DUPLICATE KEY UPDATE ts=?, t_modify=NOW()`
+	sqlStr := endpointSqls[cutils.SQLDialect()]
 
 	_, err := conn.Exec(sqlStr, item.Endpoint, ts, ts)
 	if err != nil {
@@ -184,9 +208,7 @@ func updateIndexFromOneItem(item *cmodel.GraphItem, conn *sql.DB) error {
 	// tag_endpoint表
 	for tagKey, tagVal := range item.Tags {
 		tag := fmt.Sprintf("%s=%s", tagKey, tagVal)
-		sqlStr := `INSERT INTO tag_endpoint(tag, endpoint_id, ts, t_create)
-			VALUES (?, ?, ?, NOW())
-			ON DUPLICATE KEY UPDATE ts=?, t_modify=NOW()`
+		sqlStr := tagEndpointSqls[cutils.SQLDialect()]
 
 		_, err := conn.Exec(sqlStr, tag, endpointId, ts, ts)
 		if err != nil {
@@ -202,9 +224,7 @@ func updateIndexFromOneItem(item *cmodel.GraphItem, conn *sql.DB) error {
 		counter = fmt.Sprintf("%s/%s", counter, cutils.SortedTags(item.Tags))
 	}
 
-	sqlStr = `INSERT INTO endpoint_counter(endpoint_id,counter,step,type,ts,t_create)
-		VALUES (?,?,?,?,?,NOW())
-		ON DUPLICATE KEY UPDATE ts=?,step=?,type=?,t_modify=NOW()`
+	sqlStr = endpointCounterSqls[cutils.SQLDialect()]
 
 	_, err = conn.Exec(sqlStr, endpointId, counter, item.Step, item.DsType, ts, ts, item.Step, item.DsType)
 	if err != nil {

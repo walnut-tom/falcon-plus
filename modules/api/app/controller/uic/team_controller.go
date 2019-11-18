@@ -59,17 +59,17 @@ func Teams(c *gin.Context) {
 	if user.IsAdmin() {
 		if limit != -1 && page != -1 {
 			dt = db.Uic.Table("team").Raw(
-				"select * from team where name regexp ? limit ?, ?", query, page, limit).Scan(&teams)
+				"select * from team where name ~* ? limit ?, ?", query, page, limit).Scan(&teams)
 		} else {
-			dt = db.Uic.Table("team").Where("name regexp ?", query).Scan(&teams)
+			dt = db.Uic.Table("team").Where("name ~* ?", query).Scan(&teams)
 		}
 		err = dt.Error
 	} else {
 		//team creator and team member can manage the team
 		dt = db.Uic.Raw(
 			`select a.* from team as a, rel_team_user as b 
-			where a.name regexp ? and a.id = b.tid and b.uid = ? 
-			UNION select * from team where name regexp ? and creator = ?`,
+			where a.name ~* ? and a.id = b.tid and b.uid = ? 
+			UNION select * from team where name ~* ? and creator = ?`,
 			query, user.ID, query, user.ID).Scan(&teams)
 		err = dt.Error
 	}

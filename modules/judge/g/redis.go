@@ -15,11 +15,11 @@
 package g
 
 import (
-	"log"
 	"strings"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	log "github.com/sirupsen/logrus"
 )
 
 var RedisConnPool *redis.Pool

@@ -16,49 +16,48 @@ package db
 
 import (
 	"fmt"
-	"github.com/open-falcon/falcon-plus/common/model"
-	"log"
+	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/open-falcon/falcon-plus/common/model"
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
+	"github.com/go-resty/resty/v2"
 )
 
 func QueryExpressions() (ret []*model.Expression, err error) {
-	sql := "select id, expression, func, op, right_value, max_step, priority, note, action_id from expression where action_id>0 and pause=0"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return ret, err
-	}
+	defer utils.DebugPrintError(err)
+	ret = make([]*model.Expression, 0)
+	cfg := g.Config()
+	url := fmt.Sprintf("%s/api/v1/expression", cfg.Api.PlusApi)
+	exps := make([]*models.Expression, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&exps).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, exp := range exps {
+			v, ex := strconv.ParseFloat(exp.RightValue, 64)
+			if ex != nil {
+				utils.DebugPrintError(ex)
+				continue
+			}
 
-	defer rows.Close()
-	for rows.Next() {
-		e := model.Expression{}
-		var exp string
-		err = rows.Scan(
-			&e.Id,
-			&exp,
-			&e.Func,
-			&e.Operator,
-			&e.RightValue,
-			&e.MaxStep,
-			&e.Priority,
-			&e.Note,
-			&e.ActionId,
-		)
+			e := model.Expression{
+				Id:         int(exp.Id),
+				Func:       exp.Func,
+				Operator:   exp.Op,
+				RightValue: v,
+				MaxStep:    exp.MaxStep,
+				Priority:   exp.Priority,
+				Note:       exp.Note,
+				ActionId:   int(exp.ActionId),
+			}
+			e.Metric, e.Tags, err = parseExpression(exp.Expression)
 
-		if err != nil {
-			log.Println("WARN:", err)
-			continue
+			ret = append(ret, &e)
 		}
-
-		e.Metric, e.Tags, err = parseExpression(exp)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
-		}
-
-		ret = append(ret, &e)
 	}
-
 	return ret, nil
 }
 

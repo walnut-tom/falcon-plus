@@ -16,53 +16,39 @@ package db
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/open-falcon/falcon-plus/common/utils"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
 	"github.com/open-falcon/falcon-plus/modules/aggregator/g"
-	"log"
 )
 
 func ReadClusterMonitorItems() (M map[string]*g.Cluster, err error) {
+	defer utils.DebugPrintError(err)
 	M = make(map[string]*g.Cluster)
-	sql := "SELECT `id`, `grp_id`, `numerator`, `denominator`, `endpoint`, `metric`, `tags`, `ds_type`, `step`, `last_update` FROM `cluster`"
-
 	cfg := g.Config()
-	ids := cfg.Database.Ids
-	if len(ids) != 2 {
-		log.Fatalln("ids configuration error")
-	}
-
-	if ids[0] != -1 && ids[1] != -1 {
-		sql = fmt.Sprintf("%s WHERE `id` >= %d and `id` <= %d", sql, ids[0], ids[1])
-	} else {
-		if ids[0] != -1 {
-			sql = fmt.Sprintf("%s WHERE `id` >= %d", sql, ids[0])
+	url := fmt.Sprintf("%s/api/v1/clusters", cfg.Api.PlusApi)
+	cls := make([]*models.Cluster, 0)
+	var resp *resty.Response
+	resp, err = resty.New().R().SetResult(&cls).Get(url)
+	if resp.StatusCode() == http.StatusOK {
+		for _, cluster := range cls {
+			c := g.Cluster{
+				Id:          cluster.Id,
+				GroupId:     cluster.GrpId,
+				Numerator:   cluster.Numerator,
+				Denominator: cluster.Denominator,
+				Endpoint:    cluster.Endpoint,
+				Metric:      cluster.Metric,
+				Tags:        cluster.Tags,
+				DsType:      cluster.DsType,
+				Step:        cluster.Step,
+				LastUpdate:  cluster.LastUpdate,
+			}
+			M[fmt.Sprintf("%d%v", c.Id, c.LastUpdate)] = &c
 		}
-
-		if ids[1] != -1 {
-			sql = fmt.Sprintf("%s WHERE `id` <= %d", sql, ids[1])
-		}
 	}
-
-	if cfg.Debug {
-		log.Println(sql)
-	}
-
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("[E]", err)
-		return M, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var c g.Cluster
-		err = rows.Scan(&c.Id, &c.GroupId, &c.Numerator, &c.Denominator, &c.Endpoint, &c.Metric, &c.Tags, &c.DsType, &c.Step, &c.LastUpdate)
-		if err != nil {
-			log.Println("[E]", err)
-			continue
-		}
-
-		M[fmt.Sprintf("%d%v", c.Id, c.LastUpdate)] = &c
-	}
-
 	return M, err
 }

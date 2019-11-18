@@ -19,11 +19,58 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/open-falcon/falcon-plus/common/xorm/storage"
 	h "github.com/open-falcon/falcon-plus/modules/api/app/helper"
 	f "github.com/open-falcon/falcon-plus/modules/api/app/model/falcon_portal"
 	u "github.com/open-falcon/falcon-plus/modules/api/app/utils"
+	"github.com/open-falcon/falcon-plus/modules/api/config"
 	log "github.com/sirupsen/logrus"
 )
+
+func createHost(c *gin.Context) {
+	updateHost(c)
+}
+
+func patchHost(c *gin.Context) {
+	updateHost(c)
+}
+
+func queryHosts(c *gin.Context) {
+	var err error
+	var hosts []models.Host
+	hosts, err = storage.NewPortalService(config.Engines().Portal()).QueryHosts(config.Engines().Portal())
+	if err == nil {
+		h.JSONR(c, hosts)
+		return
+	}
+}
+
+func queryMonitoredHosts(c *gin.Context) {
+	var err error
+	var hosts []models.Host
+	hosts, err = storage.NewPortalService(config.Engines().Portal()).QueryMonitoredHosts(config.Engines().Portal())
+	if err == nil {
+		h.JSONR(c, hosts)
+		return
+	}
+}
+
+func updateHost(c *gin.Context) {
+	host := &models.Host{}
+	err := c.ShouldBindBodyWith(host, binding.JSON)
+	defer utils.DebugPrintError(err)
+	if err == nil {
+		host, err = storage.NewPortalService(config.Engines().Portal()).CreateOrUpdateHost(config.Engines().Portal(), host)
+		if err == nil {
+			h.JSONR(c, host)
+			return
+		}
+	}
+	h.JSONR(c, expecstatus, err)
+}
 
 func GetHostBindToWhichHostGroup(c *gin.Context) {
 	HostIdTmp := c.Params.ByName("host_id")

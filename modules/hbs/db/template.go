@@ -15,90 +15,64 @@
 package db
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/open-falcon/falcon-plus/common/model"
-	"log"
+
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/modules/hbs/g"
+
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
+	"github.com/go-resty/resty/v2"
 )
 
-func QueryGroupTemplates() (map[int][]int, error) {
-	m := make(map[int][]int)
-
-	sql := "select grp_id, tpl_id from grp_tpl"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return m, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var gid, tid int
-		err = rows.Scan(&gid, &tid)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
-		}
-
-		if _, exists := m[gid]; exists {
-			m[gid] = append(m[gid], tid)
-		} else {
-			m[gid] = []int{tid}
+func QueryGroupTemplates() (m map[int][]int, err error) {
+	m = make(map[int][]int)
+	var resp *resty.Response
+	results := make([]*models.GroupTemplate, 0)
+	uri := fmt.Sprintf("%s/api/v1/templates/group", g.Config().Api.PlusApi)
+	resp, err = resty.New().R().SetResult(&results).Get(uri)
+	if resp.StatusCode() == http.StatusOK {
+		for _, grpTpl := range results {
+			if _, exists := m[int(grpTpl.GrpId)]; exists {
+				m[int(grpTpl.GrpId)] = append(m[int(grpTpl.GrpId)], int(grpTpl.TplId))
+			} else {
+				m[int(grpTpl.GrpId)] = []int{int(grpTpl.TplId)}
+			}
 		}
 	}
-
-	return m, nil
+	return m, err
 }
 
 // 获取所有的策略模板列表
-func QueryTemplates() (map[int]*model.Template, error) {
-
-	templates := make(map[int]*model.Template)
-
-	sql := "select id, tpl_name, parent_id, action_id, create_user from tpl"
-	rows, err := DB.Query(sql)
-	if err != nil {
-		log.Println("ERROR:", err)
-		return templates, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		t := model.Template{}
-		err = rows.Scan(&t.Id, &t.Name, &t.ParentId, &t.ActionId, &t.Creator)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
+func QueryTemplates() (templates map[int]*model.Template, err error) {
+	defer utils.DebugPrintError(err)
+	templates = make(map[int]*model.Template)
+	var resp *resty.Response
+	results := make([]*models.Template, 0)
+	uri := fmt.Sprintf("%s/api/v1/templates", g.Config().Api.PlusApi)
+	resp, err = resty.New().R().SetResult(&results).Get(uri)
+	if resp.StatusCode() == http.StatusOK {
+		for _, template := range results {
+			templates[int(template.Id)] = &model.Template{
+				Id:       int(template.Id),
+				Name:     template.TplName,
+				ParentId: int(template.ParentId),
+				ActionId: int(template.ActionId),
+				Creator:  template.CreateUser,
+			}
 		}
-		templates[t.Id] = &t
 	}
+	return templates, err
 
-	return templates, nil
 }
 
 // 一个机器ID对应了多个模板ID
-func QueryHostTemplateIds() (map[int][]int, error) {
-	ret := make(map[int][]int)
-	rows, err := DB.Query("select a.tpl_id, b.host_id from grp_tpl as a inner join grp_host as b on a.grp_id=b.grp_id")
-	if err != nil {
-		log.Println("ERROR:", err)
-		return ret, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		var tid, hid int
-
-		err = rows.Scan(&tid, &hid)
-		if err != nil {
-			log.Println("ERROR:", err)
-			continue
-		}
-
-		if _, ok := ret[hid]; ok {
-			ret[hid] = append(ret[hid], tid)
-		} else {
-			ret[hid] = []int{tid}
-		}
-	}
-
-	return ret, nil
+func QueryHostTemplateIds() (ret map[int][]int, err error) {
+	ret = make(map[int][]int)
+	defer utils.DebugPrintError(err)
+	uri := fmt.Sprintf("%s/api/v1/group/host/templates", g.Config().Api.PlusApi)
+	_, err = resty.New().R().SetResult(&ret).Get(uri)
+	return ret, err
 }

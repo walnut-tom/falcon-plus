@@ -16,38 +16,38 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/open-falcon/falcon-plus/common/model"
+	"github.com/open-falcon/falcon-plus/common/utils"
+	"github.com/open-falcon/falcon-plus/common/xorm/models"
 	"github.com/open-falcon/falcon-plus/modules/hbs/g"
-	"log"
+	"github.com/go-resty/resty/v2"
 )
 
 func UpdateAgent(agentInfo *model.AgentUpdateInfo) {
-	sql := ""
+	cfg := g.Config()
+	host := models.Host{
+		Hostname:      agentInfo.ReportRequest.Hostname,
+		Ip:            agentInfo.ReportRequest.IP,
+		AgentVersion:  agentInfo.ReportRequest.AgentVersion,
+		PluginVersion: agentInfo.ReportRequest.PluginVersion,
+	}
+
 	if g.Config().Hosts == "" {
-		sql = fmt.Sprintf(
-			"insert into host(hostname, ip, agent_version, plugin_version) values ('%s', '%s', '%s', '%s') on duplicate key update ip='%s', agent_version='%s', plugin_version='%s'",
-			agentInfo.ReportRequest.Hostname,
-			agentInfo.ReportRequest.IP,
-			agentInfo.ReportRequest.AgentVersion,
-			agentInfo.ReportRequest.PluginVersion,
-			agentInfo.ReportRequest.IP,
-			agentInfo.ReportRequest.AgentVersion,
-			agentInfo.ReportRequest.PluginVersion,
-		)
+		// sql = fmt.Sprintf(
+		// 	sqls[utils.SQLDriver()],
+		// 	agentInfo.ReportRequest.Hostname,
+		// 	agentInfo.ReportRequest.IP,
+		// 	agentInfo.ReportRequest.AgentVersion,
+		// 	agentInfo.ReportRequest.PluginVersion,
+		// 	agentInfo.ReportRequest.IP,
+		// 	agentInfo.ReportRequest.AgentVersion,
+		// 	agentInfo.ReportRequest.PluginVersion,
+		// )
 	} else {
 		// sync, just update
-		sql = fmt.Sprintf(
-			"update host set ip='%s', agent_version='%s', plugin_version='%s' where hostname='%s'",
-			agentInfo.ReportRequest.IP,
-			agentInfo.ReportRequest.AgentVersion,
-			agentInfo.ReportRequest.PluginVersion,
-			agentInfo.ReportRequest.Hostname,
-		)
+		url := fmt.Sprintf("%s/api/v1/host", cfg.Api.PlusApi)
+		_, err := resty.New().R().SetBody(host).Patch(url)
+		defer utils.DebugPrintError(err)
 	}
-
-	_, err := DB.Exec(sql)
-	if err != nil {
-		log.Println("exec", sql, "fail", err)
-	}
-
 }
