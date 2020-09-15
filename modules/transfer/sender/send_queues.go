@@ -36,4 +36,12 @@ func initSendQueues() {
 	if cfg.Tsdb.Enabled {
 		TsdbQueue = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
 	}
+
+	if cfg.Transfer.Enabled {
+		TransferQueue = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
+	}
+
+	if cfg.Influxdb.Enabled {
+		InfluxdbQueue = nlist.NewSafeListLimited(DefaultSendQueueMaxSize)
+	}
 }

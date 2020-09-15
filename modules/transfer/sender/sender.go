@@ -16,13 +16,16 @@ package sender
 
 import (
 	"fmt"
+	"log"
+
+	"github.com/influxdata/influxdb/client/v2"
 	backend "github.com/open-falcon/falcon-plus/common/backend_pool"
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/transfer/g"
 	"github.com/open-falcon/falcon-plus/modules/transfer/proc"
 	rings "github.com/toolkits/consistent/rings"
 	nlist "github.com/toolkits/container/list"
-	"log"
+	"time"
 )
 
 const (
@@ -44,9 +47,18 @@ var (
 // 发送缓存队列
 // node -> queue_of_data
 var (
-	TsdbQueue   *nlist.SafeListLimited
-	JudgeQueues = make(map[string]*nlist.SafeListLimited)
-	GraphQueues = make(map[string]*nlist.SafeListLimited)
+	TsdbQueue     *nlist.SafeListLimited
+	JudgeQueues   = make(map[string]*nlist.SafeListLimited)
+	GraphQueues   = make(map[string]*nlist.SafeListLimited)
+	TransferQueue *nlist.SafeListLimited
+	InfluxdbQueue *nlist.SafeListLimited
+)
+
+// transfer的主机列表，以及主机名和地址的映射关系
+// 用于随机遍历transfer
+var (
+	TransferMap       = make(map[string]string, 0)
+	TransferHostnames = make([]string, 0)
 )
 
 // 连接池
@@ -55,7 +67,56 @@ var (
 	JudgeConnPools     *backend.SafeRpcConnPools
 	TsdbConnPoolHelper *backend.TsdbConnPoolHelper
 	GraphConnPools     *backend.SafeRpcConnPools
+	TransferConnPools  *backend.SafeRpcConnPools
 )
+
+// infludbConn
+type InfluxClient struct {
+	Client    client.Client
+	Database  string
+	Precision string
+}
+
+func NewInfluxdbClient() (*InfluxClient, error) {
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     g.Config().Influxdb.Address,
+		Username: g.Config().Influxdb.Username,
+		Password: g.Config().Influxdb.Password,
+		Timeout:  time.Millisecond * time.Duration(g.Config().Influxdb.Timeout),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &InfluxClient{
+		Client:    c,
+		Database:  g.Config().Influxdb.Database,
+		Precision: g.Config().Influxdb.Precision,
+	}, nil
+}
+
+func (c *InfluxClient) Send(items []*cmodel.InfluxdbItem) error {
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  c.Database,
+		Precision: c.Precision,
+	})
+	if err != nil {
+		log.Println("create batch points error: ", err)
+		return err
+	}
+
+	for _, item := range items {
+		pt, err := client.NewPoint(item.Measurement, item.Tags, item.Fileds, time.Unix(item.Timestamp, 0))
+		if err != nil {
+			log.Println("create new points error: ", err)
+			continue
+		}
+		bp.AddPoint(pt)
+	}
+
+	return c.Client.Write(bp)
+}
 
 // 初始化数据发送服务, 在main函数中调用
 func Start() {
@@ -211,4 +272,40 @@ func convert2TsdbItem(d *cmodel.MetaData) *cmodel.TsdbItem {
 
 func alignTs(ts int64, period int64) int64 {
 	return ts - ts%period
+}
+
+func Push2TransferSendQueue(items []*cmodel.MetaData) {
+	for _, item := range items {
+		isSuccess := TransferQueue.PushFront(item)
+
+		if !isSuccess {
+			proc.SendToTransferDropCnt.Incr()
+		}
+	}
+}
+
+// 将原始数据插入到influxdb缓存队列
+func Push2InfluxdbSendQueue(items []*cmodel.MetaData) {
+	for _, item := range items {
+		influxdbItem := convert2InfluxdbItem(item)
+		isSuccess := InfluxdbQueue.PushFront(influxdbItem)
+
+		if !isSuccess {
+			proc.SendToInfluxdbDropCnt.Incr()
+		}
+	}
+}
+
+func convert2InfluxdbItem(d *cmodel.MetaData) *cmodel.InfluxdbItem {
+	t := cmodel.InfluxdbItem{Tags: make(map[string]string), Fileds: make(map[string]interface{})}
+
+	for k, v := range d.Tags {
+		t.Tags[k] = v
+	}
+	t.Tags["endpoint"] = d.Endpoint
+	t.Measurement = d.Metric
+	t.Fileds["value"] = d.Value
+	t.Timestamp = d.Timestamp
+
+	return &t
 }

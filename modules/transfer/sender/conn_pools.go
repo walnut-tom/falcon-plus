@@ -46,10 +46,30 @@ func initConnPools() {
 	GraphConnPools = backend.CreateSafeRpcConnPools(cfg.Graph.MaxConns, cfg.Graph.MaxIdle,
 		cfg.Graph.ConnTimeout, cfg.Graph.CallTimeout, graphInstances.ToSlice())
 
+	// transfer
+	if cfg.Transfer.Enabled {
+		transferInstances := nset.NewStringSet()
+		for hn, instance := range cfg.Transfer.Cluster {
+			TransferHostnames = append(TransferHostnames, hn)
+			TransferMap[hn] = instance
+			transferInstances.Add(instance)
+		}
+		TransferConnPools = backend.CreateSafeJsonrpcConnPools(cfg.Transfer.MaxConns, cfg.Transfer.MaxIdle,
+			cfg.Transfer.ConnTimeout, cfg.Transfer.CallTimeout, transferInstances.ToSlice())
+	}
 }
 
 func DestroyConnPools() {
+	cfg := g.Config()
+
 	JudgeConnPools.Destroy()
 	GraphConnPools.Destroy()
-	TsdbConnPoolHelper.Destroy()
+
+	if cfg.Tsdb.Enabled {
+		TsdbConnPoolHelper.Destroy()
+	}
+
+	if cfg.Transfer.Enabled {
+		TransferConnPools.Destroy()
+	}
 }

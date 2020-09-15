@@ -16,10 +16,11 @@ package g
 
 import (
 	"encoding/json"
-	"github.com/toolkits/file"
 	"log"
 	"strings"
 	"sync"
+
+	"github.com/toolkits/file"
 )
 
 type HttpConfig struct {
@@ -73,15 +74,41 @@ type TsdbConfig struct {
 	Address     string `json:"address"`
 }
 
+type TransferConfig struct {
+	Enabled     bool              `json:"enabled"`
+	Batch       int               `json:"batch"`
+	ConnTimeout int               `json:"connTimeout"`
+	CallTimeout int               `json:"callTimeout"`
+	MaxConns    int               `json:"maxConns"`
+	MaxIdle     int               `json:"maxIdle"`
+	MaxRetry    int               `json:"retry"`
+	Cluster     map[string]string `json:"cluster"`
+}
+
+type InfluxdbConfig struct {
+	Enabled   bool   `json:"enabled"`
+	Batch     int    `json:"batch"`
+	MaxRetry  int    `json:"retry"`
+	MaxConns  int    `json:"maxConns"`
+	Timeout   int    `json:"timeout"`
+	Address   string `json:"address"`
+	Database  string `json:"db"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	Precision string `json:"precision"`
+}
+
 type GlobalConfig struct {
-	Debug   bool          `json:"debug"`
-	MinStep int           `json:"minStep"` //最小周期,单位sec
-	Http    *HttpConfig   `json:"http"`
-	Rpc     *RpcConfig    `json:"rpc"`
-	Socket  *SocketConfig `json:"socket"`
-	Judge   *JudgeConfig  `json:"judge"`
-	Graph   *GraphConfig  `json:"graph"`
-	Tsdb    *TsdbConfig   `json:"tsdb"`
+	Debug    bool            `json:"debug"`
+	MinStep  int             `json:"minStep"` //最小周期,单位sec
+	Http     *HttpConfig     `json:"http"`
+	Rpc      *RpcConfig      `json:"rpc"`
+	Socket   *SocketConfig   `json:"socket"`
+	Judge    *JudgeConfig    `json:"judge"`
+	Graph    *GraphConfig    `json:"graph"`
+	Tsdb     *TsdbConfig     `json:"tsdb"`
+	Transfer *TransferConfig `json:"transfer"`
+	Influxdb *InfluxdbConfig `json:"influxdb"`
 }
 
 var (
